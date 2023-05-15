@@ -26,11 +26,19 @@ const HeadPatElia: React.FC = () => {
     if (headPatPlaying || reactionPlaying) {
       return;
     }
-
     setHeadPatsGiven((priorCount) => ++priorCount);
 
-    const reactionIndex = Math.floor(Math.random() * unusedReactions.length);
-    const reaction = unusedReactions[reactionIndex];
+    // Try to use a reaction with a different chibi than the last one
+    let reactions = unusedReactions.filter(
+      (r) => r.chibiPath !== currentChibiPath
+    );
+    if (reactions.length === 0) {
+      reactions = unusedReactions;
+    }
+    const reactionIndex = Math.floor(Math.random() * reactions.length);
+    const reaction = reactions[reactionIndex];
+
+    // Reset unused reactions if all have been used
     if (unusedReactions.length === 1) {
       setUnusedReactions(ELIA_REACTIONS.filter((r) => r.id !== reaction.id));
     } else {
@@ -64,10 +72,13 @@ const HeadPatElia: React.FC = () => {
           onClick={handleHeadPat}
           disabled={headPatPlaying || reactionPlaying}
         >
-          Head pat Elia
+          {'Head pat Elia'}
         </button>
-        <div className={styles.headPatCount}>
+        <div className={styles.textContainer}>
           {`Head pats given: ${headPatsGiven.toLocaleString()}`}
+        </div>
+        <div className={styles.textContainer}>
+          {'Elia makes sounds, so unmute your audio'}
         </div>
       </div>
       <div className={styles.creditsSection}>

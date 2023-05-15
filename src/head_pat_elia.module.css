@@ -61,9 +61,16 @@
   border-color: #a07094;
 }
 
-.headPatCount {
+.headPatButton:disabled {
+  color: #f8f3f1;
+  background-color: gray;
+  border-color: gray;
+}
+
+.textContainer {
   color: #f8f3f1;
   background-color: #bda7b7;
   padding: 0.25rem;
   border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
 }
