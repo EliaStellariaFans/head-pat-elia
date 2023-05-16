@@ -6,6 +6,8 @@ import styles from './head_pat_elia.module.css';
 // Duration needed to complete 3 head pat cylces
 const HEAD_PAT_DURATION_MS = 1900;
 
+const HEAD_PAT_COUNT_KEY = 'head_pat_count';
+
 const HeadPatElia: React.FC = () => {
   const [currentChibiPath, setCurrentChibiPath] = useState<string>(chill2ChibiPath);
   const [unusedReactions, setUnusedReactions] = useState<EliaReaction[]>(
@@ -14,7 +16,13 @@ const HeadPatElia: React.FC = () => {
   const [nextReaction, setNextReaction] = useState<EliaReaction | null>(null);
   const [headPatPlaying, setHeadPatPlaying] = useState<boolean>(false);
   const [reactionPlaying, setReactionPlaying] = useState<boolean>(false);
-  const [headPatsGiven, setHeadPatsGiven] = useState<number>(0);
+  const [headPatsGiven, setHeadPatsGiven] = useState<number>(
+    () => {
+      const storedCount = localStorage.getItem(HEAD_PAT_COUNT_KEY) || '0';
+      const parsedCount = parseInt(storedCount);
+      return isNaN(parsedCount) ? 0 : parsedCount;
+    }
+  );
 
   if (!nextReaction) {
     const {selectedReaction, nextUnusedReactions} = selectNextReaction(
@@ -29,6 +37,7 @@ const HeadPatElia: React.FC = () => {
     if (headPatPlaying || reactionPlaying) {
       return;
     }
+    localStorage.setItem(HEAD_PAT_COUNT_KEY, (headPatsGiven + 1).toString());
     setHeadPatsGiven((priorCount) => ++priorCount);
 
     const reaction = nextReaction!;
