@@ -1,7 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {EliaReaction, ELIA_REACTIONS} from './elia_reaction';
 import chill2ChibiPath from './media/image/chill2.png';
-import stomachGrowlAudio from './media/audio/stomach_growl.mp3';
 import styles from './head_pat_elia.module.css';
 
 // Duration needed to complete 3 head pat cylces
@@ -12,15 +11,19 @@ const HeadPatElia: React.FC = () => {
   const [unusedReactions, setUnusedReactions] = useState<EliaReaction[]>(
     [...ELIA_REACTIONS]
   );
+  const [nextReaction, setNextReaction] = useState<EliaReaction | null>(null);
   const [headPatPlaying, setHeadPatPlaying] = useState<boolean>(false);
   const [reactionPlaying, setReactionPlaying] = useState<boolean>(false);
   const [headPatsGiven, setHeadPatsGiven] = useState<number>(0);
 
-  // Make an audio load immediately on mount to avoid play delay on first
-  // audio play later
-  useEffect(() => {
-    new Audio(stomachGrowlAudio);
-  }, []);
+  if (!nextReaction) {
+    const {selectedReaction, nextUnusedReactions} = selectNextReaction(
+      unusedReactions, currentChibiPath
+    );
+    preloadReaction(selectedReaction);
+    setNextReaction(selectedReaction);
+    setUnusedReactions(nextUnusedReactions);
+  }
 
   const handleHeadPat = () => {
     if (headPatPlaying || reactionPlaying) {
@@ -28,24 +31,8 @@ const HeadPatElia: React.FC = () => {
     }
     setHeadPatsGiven((priorCount) => ++priorCount);
 
-    // Try to use a reaction with a different chibi than the last one
-    let reactions = unusedReactions.filter(
-      (r) => r.chibiPath !== currentChibiPath
-    );
-    if (reactions.length === 0) {
-      reactions = unusedReactions;
-    }
-    const reactionIndex = Math.floor(Math.random() * reactions.length);
-    const reaction = reactions[reactionIndex];
-
-    // Reset unused reactions if all have been used
-    if (unusedReactions.length === 1) {
-      setUnusedReactions(ELIA_REACTIONS.filter((r) => r.id !== reaction.id));
-    } else {
-      setUnusedReactions(unusedReactions.filter((r) => r.id !== reaction.id));
-    }
-
-    const reactionAudio = new Audio(reaction.audioPath);
+    const reaction = nextReaction!;
+    const reactionAudio = new Audio(reaction!.audioPath);
     setHeadPatPlaying(true);
     setReactionPlaying(true);
     setCurrentChibiPath(reaction.chibiPatPath);
@@ -55,6 +42,13 @@ const HeadPatElia: React.FC = () => {
       setHeadPatPlaying(false);
     }, HEAD_PAT_DURATION_MS);
     reactionAudio.play();
+
+    const {selectedReaction, nextUnusedReactions} = selectNextReaction(
+      unusedReactions, reaction.chibiPath
+    );
+    preloadReaction(selectedReaction);
+    setNextReaction(selectedReaction);
+    setUnusedReactions(nextUnusedReactions);
   };
 
   return (
@@ -93,6 +87,55 @@ const HeadPatElia: React.FC = () => {
       </div>
     </div>
   );
+}
+
+function selectNextReaction(unusedReactions: EliaReaction[], currentChibiPath: string): {
+  selectedReaction: EliaReaction;
+  nextUnusedReactions: EliaReaction[];
+} {
+  // Try to use a reaction with a different chibi than the last one
+  let reactions = unusedReactions.filter(
+    (r) => r.chibiPath !== currentChibiPath
+  );
+  if (reactions.length === 0) {
+    reactions = unusedReactions;
+  }
+  const selectedReactionIndex = Math.floor(Math.random() * reactions.length);
+  const selectedReaction = reactions[selectedReactionIndex];
+
+  // Reset unused reactions if all have been used
+  let nextUnusedReactions: EliaReaction[];
+  if (unusedReactions.length === 1) {
+    nextUnusedReactions = ELIA_REACTIONS.filter((r) => r.id !== selectedReaction.id);
+  } else {
+    nextUnusedReactions = unusedReactions.filter((r) => r.id !== selectedReaction.id);
+  }
+
+  return {selectedReaction, nextUnusedReactions};
+}
+
+function preloadReaction(reaction: EliaReaction): void {
+  const linkElements = Array.from(document.getElementsByTagName('link'));
+  const preloadElements = linkElements.filter((e) => e.rel === 'preload');
+  const preloadedPaths = preloadElements.map((e) => e.href);
+
+  if (!preloadedPaths.find((p) => p.endsWith(reaction.chibiPath))) {
+    preloadImage(reaction.chibiPath);
+  }
+  if (!preloadedPaths.find((p) => p.endsWith(reaction.chibiPath))) {
+    preloadImage(reaction.chibiPatPath);
+  }
+
+  const audio = new Audio(reaction.audioPath);
+  audio.preload = 'auto';
+}
+
+function preloadImage(imagePath: string): void {
+  const link = document.createElement('link');
+  link.href = imagePath;
+  link.rel = 'preload';
+  link.as = 'image';
+  document.head.appendChild(link);
 }
 
 export default HeadPatElia;
