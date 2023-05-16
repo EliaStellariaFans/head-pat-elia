@@ -87,11 +87,21 @@ const HeadPatElia: React.FC = () => {
       <div className={styles.creditsSection}>
         <div>
           {'Created by '}
-          <a href={'https://twitter.com/Nick22Nick22'}>Nick22</a>
+          <a
+            href={'https://twitter.com/Nick22Nick22'}
+            target={'_blank'}
+          >
+            Nick22
+          </a>
         </div>
         <div>
           {'Check out the project on '}
-          <a href={'https://github.com/EliaStellariaFans/head-pat-elia'}>GitHub</a>
+          <a
+            href={'https://github.com/EliaStellariaFans/head-pat-elia'}
+            target={'_blank'}
+          >
+            GitHub
+          </a>
         </div>
       </div>
     </div>
